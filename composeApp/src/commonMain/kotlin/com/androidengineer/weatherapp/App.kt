@@ -20,9 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import org.jetbrains.compose.resources.imageResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import weatherapp.composeapp.generated.resources.Res
@@ -32,26 +36,30 @@ import weatherapp.composeapp.generated.resources.humidity
 import weatherapp.composeapp.generated.resources.wind_direction
 import weatherapp.composeapp.generated.resources.feels_like
 import weatherapp.composeapp.generated.resources.wind
+import weatherapp.composeapp.generated.resources.arrow_right
 
 @Composable
 @Preview
-fun App() {
+fun App(viewModel: CurrentWeatherViewModel = viewModel()) {
+    val state = viewModel.weatherState.collectAsStateWithLifecycle().value
+    var image by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(state.current.condition.icon) {
+        image = loadImageFromUrl(state.current.condition.icon)
+    }
     MaterialTheme {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFFB3E5FC), Color(0xFFE1F5FE)
-                        )
+            modifier = Modifier.fillMaxSize().background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFFB3E5FC), Color(0xFFE1F5FE)
                     )
                 )
-                .padding(40.dp, 70.dp, 40.dp, 0.dp),
+            ).padding(40.dp, 70.dp, 40.dp, 0.dp),
             content = {
                 Text(
-                    text = "Lisboa, Portugal",
+                    text = "${state.location.name} ${state.location.country}",
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -61,14 +69,14 @@ fun App() {
                     modifier = Modifier.wrapContentWidth().wrapContentHeight(),
                     content = {
                         Image(
-                            modifier = Modifier.size(40.dp),
-                            painter = painterResource(Res.drawable.weather),
+                            modifier = Modifier.size(70.dp),
+                            bitmap = image ?: imageResource(Res.drawable.weather),
                             contentDescription = ""
                         )
 
                         Text(
                             modifier = Modifier.padding(15.dp, 10.dp, 0.dp, 0.dp),
-                            text = "30 \u00B0C",
+                            text = "${state.current.temp_c} \u00B0C",
                             fontSize = 35.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -76,11 +84,9 @@ fun App() {
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(0.dp, 20.dp, 0.dp, 0.dp)
-                        .background(
-                            color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
-                        ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
+                    modifier = Modifier.padding(0.dp, 20.dp, 0.dp, 0.dp).background(
+                        color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
+                    ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
                     content = {
 
                         Image(
@@ -102,21 +108,18 @@ fun App() {
                         )
 
                         Text(
-                            text = "19 Sep 2025 03:05",
+                            text = state.location.localtime,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Gray
                         )
-                    }
-                )
+                    })
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(0.dp, 10.dp, 0.dp, 0.dp)
-                        .background(
-                            color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
-                        ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
+                    modifier = Modifier.padding(0.dp, 10.dp, 0.dp, 0.dp).background(
+                        color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
+                    ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
                     content = {
 
                         Image(
@@ -138,21 +141,18 @@ fun App() {
                         )
 
                         Text(
-                            text = "83%",
+                            text = "${state.current.humidity}%",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Gray
                         )
-                    }
-                )
+                    })
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(0.dp, 10.dp, 0.dp, 0.dp)
-                        .background(
-                            color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
-                        ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
+                    modifier = Modifier.padding(0.dp, 10.dp, 0.dp, 0.dp).background(
+                        color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
+                    ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
                     content = {
 
                         Image(
@@ -174,21 +174,18 @@ fun App() {
                         )
 
                         Text(
-                            text = "8 km/h",
+                            text = "${state.current.wind_kph} km/h",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Gray
                         )
-                    }
-                )
+                    })
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(0.dp, 10.dp, 0.dp, 0.dp)
-                        .background(
-                            color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
-                        ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
+                    modifier = Modifier.padding(0.dp, 10.dp, 0.dp, 0.dp).background(
+                        color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
+                    ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
                     content = {
 
                         Image(
@@ -210,21 +207,18 @@ fun App() {
                         )
 
                         Text(
-                            text = "West-Northwest",
+                            text = state.current.wind_dir,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Gray
                         )
-                    }
-                )
+                    })
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(0.dp, 10.dp, 0.dp, 0.dp)
-                        .background(
-                            color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
-                        ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
+                    modifier = Modifier.padding(0.dp, 10.dp, 0.dp, 0.dp).background(
+                        color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
+                    ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
                     content = {
 
                         Image(
@@ -246,29 +240,54 @@ fun App() {
                         )
 
                         Text(
-                            text = "30 \u00B0C",
+                            text = "${state.current.feelslike_c} \u00B0C",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Gray
                         )
-                    }
-                )
+                    })
 
-                Row (
-                    modifier = Modifier
-                        .padding(0.dp, 10.dp, 0.dp, 0.dp)
-                        .background(
-                            color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
-                        ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
-                    content = {
+                Row(
+                    modifier = Modifier.padding(0.dp, 10.dp, 0.dp, 0.dp).background(
+                        color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
+                    ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(), content = {
                         MapView(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(150.dp)
+                            lat = state.location.lat, lng = state.location.lon,
+                            modifier = Modifier.fillMaxWidth().height(150.dp)
                         )
-                    }
-                )
-            }
-        )
+                    })
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(0.dp, 15.dp, 0.dp, 0.dp).background(
+                        color = Color(0x50FFFFFF), shape = RoundedCornerShape(10.dp)
+                    ).padding(10.dp, 7.dp).wrapContentWidth().wrapContentHeight(),
+                    content = {
+
+                        Image(
+                            modifier = Modifier.size(25.dp),
+                            painter = painterResource(Res.drawable.weather),
+                            contentDescription = ""
+                        )
+
+                        Text(
+                            modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp),
+                            text = "3 Days Forecast",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+
+                        Spacer(
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Image(
+                            modifier = Modifier.size(30.dp),
+                            painter = painterResource(Res.drawable.arrow_right),
+                            contentDescription = ""
+                        )
+                    })
+            })
     }
 }
